@@ -1,0 +1,336 @@
+---
+title: "Bitcoin companies"
+output: html_notebook
+---
+
+The aim of the project is knowing the companies related to bitcoin which were dissolved since 17 December 2017. 
+
+Data was collecting using Companies House and OpenCorporates's API. Different groups of words were used in each process to solve the APIs' limitations. Words used:
+
+CH: bitcoin, crypto, BTC, blockchain, cripto, coins, protocol, coinbase, coincheck, coindesk, coingate, bitgo, bitmoney, bitfinex, digitalmoney, buycoin, coinfloor,
+
+OC: Satoshi, satoshipay, satoshicoins, satoshipoint, coin, ICO, digital currency, virtual currency, virtual money, bit trade, block (NOT INLCUDED IN THE FINAL ANALYSIS), ghash,magnr, Bsave, exmo finance.
+
+Apart from that, I got 23 23 extra companies were included, those that appear on list of crypto currency companies and those which are part of the CryptoUK organisation.
+
+```{r}
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(scales)
+```
+
+# Importing datasets
+
+```{r}
+#First analysis
+blockchain <- read.csv("blockchain.csv")
+bitcoin <- read.csv("bitcoin.csv")
+crypto <- read.csv("crypto.csv")
+btc <- read.csv("btc.csv")
+companies23 <- read.csv("company_data.csv")
+```
+
+
+```{r}
+#Final analysis which will use companies23
+CH <- read.csv("companiesCompanyHouse.csv")
+OC <- read.csv("companiesOpenCorporates.csv")
+```
+
+
+# Cleaning names
+
+Some words return results not related to bitcoins companies, so this require further cleaning. The words that have to be cleaned are:
+- CH: blockchain, coins, protocol
+- OC: coin and ICO.
+
+For instance, "blockchain" is much more than the currency. It is also related to the technology. Having a look at the name of the companies, I identified some concept not likely to be connected to the digital money.
+
+
+```{r}
+words_blockchain <- c("TECH", "RESEARCH", "MEDIA", "SOCIAL", "ARTIFICIAL INTELLIGENCE", "AUTOMOTIVE", "ENERGY", "CARBON", "COMMUNICATIONS", "DATA", "DESIGN", "CONSTRUCTION", " AI ", "EDUCATION", "ENGINEERING", "SPORT", "FOREST", "REFUGEES", "FOR GOOD", "IMPROVEMENT", "INCUBATOR", "HARMONISED", "INFRASTRUCTURE", "INTELLIGENCE", "INNOVATI", "LAND", "PROPERTY", "SECURIT", "HEALTH", "INDUSTRIAL", "PHARMACY","ADVANCES", "APPAREL", "AUDITING", "CARE", "DEVELOP", "ENGINE"," IT ","LEGAL", "MOBILITY", "HOUSE", "SOFTWARE", "FOUDATION", "SMOKERS", "ART ", "ACADEMY", " LAB ", " LABS")
+```
+
+
+```{r}
+no_blockchain <- CH %>% filter(word == "blockchain") %>% mutate(test = ifelse(previous_name=="Empty",grepl(paste(words_blockchain, collapse = "|"), name),grepl(paste(words_blockchain, collapse = "|"), previous_name))) %>% filter(test == TRUE)
+```
+
+Words that may go with coins in a bitcoin company
+
+```{r}
+words_coins <- c("ACCOUNTANCY","CHANGE","CHASE","CIRCLE","COINSCOPE","COINSEIGE","COINSEED","COINSHARES","COINS HARVEST","COINSHIRE","COINS HOUR","COINSIGHT FINANCIAL","COINSILIUM","COINSLIV","COINSMART","COINSNACK","COINSPRO", "COINSQUARE","COINS.SX","COINSTAMP","COINSTATION","COINSTEP","COINSTOCK","COINS TRADING","COINSTREAK","COINSTREAM","COINSCRYPT","COINS BEST","COINCASH PAYMENTS","COINSCRUM","NANOPAY","COINSULTING", "COINSCRUM","CEL.INT LTD","BTO COINS","BUBBLE AND COINS","THE COINS MARKET","COINSMITH","CONNOISSEUR","EVOLUTION COINS", "DIGIT","FUTURE COINS","GSG COINS","NRP COINS","PAY BY COINS","PENTUM COINS","NORMALIZE","S.A.R.L COINS WALLET","STARK COINS","SYNERGY COINS","24 COINS","VAP COINS","VENUS COINS","HULL COINS","DAILY","HOURLY","BCF","FORTUNA COINS","RAVEN COINS","COMMUNITY COINS","XCHANGE COINS","COINSTREAM","STAR COINS","COINSTABLE","COINSCRATCH")
+```
+
+```{r}
+no_coins <- CH %>% filter(word == "coins") %>% mutate(test = ifelse(previous_name=="Empty",grepl(paste(words_coins, collapse = "|"), name),grepl(paste(words_coins, collapse = "|"), previous_name))) %>% filter(test == FALSE)
+```
+
+Words with protocol:
+
+```{r}
+words_protocol <- c("CAPITAL","COMPUT","FINANC","TRAD","VIRTUAL","EXCHANG")
+```
+
+```{r}
+no_protocol <- CH %>% filter(word == "protocol") %>% mutate(test = ifelse(previous_name=="Empty",grepl(paste(words_protocol, collapse = "|"), name),grepl(paste(words_protocol, collapse = "|"), previous_name))) %>% filter(test == FALSE)
+```
+
+Words with ICO:
+ 
+```{r}
+words_ico <- c("LIEBSCHER","ACADEMY","CAMBRIDGESHIRE ","SATELLITE","GALLICO","FARM","HOUSING CARE","COMPETITION","HYBRID", "AWARDS","CATERING","CONSTRUCTION","CROWD","DESIGN","DIDSBURY","ELECTRICAL","ENERGY","ENTERTAINMENT","EVENT","INFORMATION", "MANAGEMENT","MASTER","RESEARCH","POLYMERS","SOFA","TOURIST","SOLUTIONS","STATIONERY","TECH","CULTURAL","SALON", "CONFERENCE","ZANAZ")
+```
+
+
+```{r}
+no_ico <- OC %>% filter(word == "ICO") %>% mutate(test = ifelse(previous_name=="NULL",grepl(paste(words_ico, collapse = "|"), name),grepl(paste(words_ico, collapse = "|"), previous_name))) %>% filter(test == TRUE)
+```
+
+Words with coin:
+
+```{r}
+words_coin <- c("A1BC", "AA EIGHT", "MANUFACTURING", "LEISURE", "ADELPHI", "ADOREPOWER", "ADVANCED COIN", "LAUNDR", "ALEXANDER", "ALL ", "ALL-", "ALWA", "SILVER", "APPLICABLE", "ART", "ENGINEERING", "AU BON COIN", "WASH", "EQUIPMENT", "BD COIN DOD", "BEST COIN COMPANY", "BIBBYS", "BIDDER", "GOLD", "BIRMINGHAM", "BISHOP", "FAIR", "STREET", "BOSTON", "BRIGHTON", "BRISTO", "BULLION", "TECHNOLOGY", "XCHANG", "CARTER", "CASH", "CASINO", "AMUSEMENT", "HOUSE", "CERTIFIED", "LAUNDR", "CLYDE", "COAL", "CMS", "COGENT", "COGON", "TECH", "MEDAL","TOURISM", "ACCEPTORS", "AGE", "AMUSEMENTS", "COPPER", "APPAREL", "CARD ", "CARS ", "CATCHER", "CELESTE", "COLLECT", "COMMUNICATIONS", "CONCESSIONS", "CONSTRUCTION", "CONSULT", "CONTROLS", "CORPORATION", "COUNT", "BUFFET", "DOZER", "ENTERPRISES", "EQUITY", "FACTORY", "FILMS", "FINANC", "FURNITURE", "GALLER", "GAM", "GRADING", "GROUP OF COMPANIES", "GUARD", "GROWTH", "HOLDING", "COIN IN THE CAN", "INCORPORATION", "INDUSTR", "INTEREST", "INSTANT", "INVEST", "ISLAND", "LEGAL", "FASHION", "LOAN", "LOCATOR", "MACHINE", "MASTER", "PROGRAMMERS", "METRICS", "COIN OF THE REALM", "MARKETING", " OP ", "SALES", "OPS", "PENSION", "PLASTIC", "PORT", "PROPERTY", "PROSPERITY", "REFRESHMENTS", "RENTALS", "COIN RUSH", "SALVAGER", "SCENE", "SCIENCES", "SHORE", "SOLUTION", "TEMPEST", "TERMINAL", "THEATRE", "TOSS", " TV ", " UP ", "UPDATE", "VALIDAT", "VENTURES", "COIN VINE", "DRINK", "-OP ","-OPS ", "COMMUNITY", "CONGLETON", "CONSOLIDATED", "CREATIVE", "INNOVAT","MUSIC", "DIAMOND", "DORSET", "ECLIPSE", "EMPIRE", "EU ", "EURO", "EZAR", "FAN COIN", "FIFA", "FIND A COIN","FIVE POUND","FLEUR DE COIN", "FOREX", "GEEKS LOUNGE", "GEMS", "GEORGE RANKIN COIN","GIFT","GIVE", "HAWKER", "HERITAGE", "FOOD", "HISTORIC", "HOMELINK", "IAN DUNFORD", "FAMILY", "INITIAL", "INSERT", "INTERNATIONAL", "INVICTA","DUGGAN", "J.G.L.", "JAVELIN","JOURNEY COIN", "JPM INTERACTIVE", "JUNGLELAND", "KEGWORTH", "SOHO", "KING", "KIRKLEES", "LA COIN", "LE BON COIN", "LE COIN FRANCAIS", "LEGACY", "LOCAL COIN", "LOODORA", "LUCKY","MAGGI", "MAGIC", "ACCESSORIES", "MEDIA", "MEDUSA", "MEGASTORAGE", "MENDIP", "MILLIARD", "MINEX","MINISTER", "MNE COIN", "MONEY TRADE", "MOVIE", "EDUCATION", "MYRRH COIN", "NELSON", "STAMP", "NORTH COIN", "AUTOMAT", "AUCTION", "OHO COIN", "OVERSEAS", "P COIN", "P&P COIN 1", "PANDA", "PARK", "PHOENIX", "PICCADILLY", "PLATINUM", "POLLAP", "PORTA PAYMENTS", "POWER", "PREMIER", "PRESTIGE", "PROVINCIAL", "REAL", "RIDES", "ROBERT", "TELESCOPES", "SCAN COIN", "SHERWOOD", "SKYLARK", "SKYSPRING", "SONIC COIN", "STERNIUM", "SUPER DUPER COIN", "SUSSEX", "SUZOHAPP", "THAMES VALLEY", "CHOCOLATE", "THE COIN CABINET", "THE COIN CUFFLINK STORE", "THE COIN CUFFLINK STORE", "THE LONDON COIN COMPANY", "THE MYSTERY CLASSIC COIN", "JEWELLERY", "SOVEREIGN", "TRAVELEX", "TUDOR", "TURN THE COIN", "TURNER", "TWO SIDES", "UK COIN CO", "W.S. COIN MOUNT", "WEIGHTON", "WESSEX", "TISSUES", "WINSOME COIN", "WOMEN", "YELLOW", "YS COIN", "CARBON")
+```
+
+
+```{r}
+no_coin <- OC %>% filter(word == "coin") %>% mutate(test = ifelse(previous_name=="NULL",grepl(paste(words_coin, collapse = "|"), name),grepl(paste(words_coin, collapse = "|"), previous_name))) %>% filter(test == TRUE)
+```
+
+# Reducing the datasets
+
+```{r}
+#CH without blockchain, coins nor protocol (2643-128-204-210)
+CH_cleaned <- anti_join(CH,no_blockchain)
+CH_cleaned <- anti_join(CH_cleaned,no_coins)
+CH_cleaned <- anti_join(CH_cleaned,no_protocol)
+CH_cleaned[11]<-NULL
+```
+
+```{r}
+2643-128-204-210
+```
+
+
+```{r}
+#dissolution_date fix
+CH_cleaned <- CH_cleaned %>% separate(dissolution_date,c("id","dissolution_date"), "- ") %>% select(-id)
+```
+
+```{r}
+CH_cleaned$dissolution_date <- as.Date(parse_date_time(CH_cleaned$dissolution_date, orders = "dmy"))
+```
+
+
+```{r}
+#OC without coin and ICO and all the results for block
+OC_cleaned <- anti_join(OC, no_ico)
+OC_cleaned <- anti_join(OC_cleaned, no_coin)
+OC_cleaned <- OC_cleaned%>% filter(word != "block")
+```
+
+```{r}
+OC_cleaned<- OC_cleaned %>% select(-effective_from,everything())
+
+OC_cleaned[11]<-NULL
+OC_cleaned[11]<-NULL
+```
+
+```{r}
+OC_cleaned$dissolution_date <- anytime::anytime(OC_cleaned$dissolution_date)
+```
+
+
+```{r}
+unique(colnames(CH_cleaned))
+class(CH_cleaned$dissolution_date)
+```
+```{r}
+unique(colnames(OC_cleaned))
+```
+
+```{r}
+unique(colnames(companies23))
+```
+
+```{r}
+companies23 <- read.csv("company_data.csv")
+colnames(companies23)<- c("index","name","company_type","number","status","address","incorporation_date","dissolution_date","linkCH","matches","previous_name","ceased_on","effective_from")
+
+companies23$word <- c("companies23")
+companies23 <- companies23[,c(1,14,2,4,3,9,5,7,8,6,11,12,13,10)]
+companies23[14]<-NULL
+```
+
+```{r}
+companies23$dissolution_date <- anytime::anytime(companies23$dissolution_date)
+```
+
+
+```{r}
+# Merging the two datasets from CH and OC plus the 23 companies found in lists of bitcoins companies and in the CryptoUK institution
+total <- do.call("rbind", list(CH_cleaned, OC_cleaned, companies23))
+```
+
+```{r}
+#remove duplicated
+length(unique(total$number))
+```
+```{r}
+total <- total[!duplicated(total["number"]), ]
+```
+
+# Prepare data to calculate time
+
+```{r}
+head(total)
+```
+
+```{r}
+class(total$ceased_on)
+class(total$effective_from)
+```
+
+
+```{r}
+#Separating year
+
+total <- total %>% mutate(Year_Incorp = year(as.Date(incorporation_date))) %>% mutate(Year_Dissol = str_extract(dissolution_date, "[12][09][0-9][0-9]")) %>% mutate(previous_effective_year = str_extract(effective_from, "[12][09][0-9][0-9]")) %>% mutate(previous_ceased_year = str_extract(ceased_on, "[12][09][0-9][0-9]"))
+```
+
+
+```{r}
+#standardising status column
+total$status <- gsub("Dissolved", "dissolved",total$status)
+total$status <- gsub("Active", "active",total$status)
+total$status <- gsub("Liquidation", "liquidation",total$status)
+total$previous_name <- gsub("NULL","Empty", total$previous_name)
+```
+
+```{r}
+write.csv(total %>% select(-address),"total_final.csv")
+```
+
+
+# Analysis
+## Disolved companies in 2017 and in 2018
+
+```{r}
+total %>% filter(status %in% c("dissolved","liquidation")  & Year_Dissol == 2018 & !grepl("COIN SERVICES|COIN UK PRIVATE",name) )
+```
+
+The number of dissolved or in liquidation companies has doubled in the last year. Sky News has counted/found at least 340 companies related to cryptocurrency which were dissolved or liquidated in 2018 compared to 139 companies during the previous year, according to a Sky News analysis with data from Companies House and OpenCorporates.
+
+Seven companies were registered and dissolved in the same 2018 year. 
+
+```{r}
+total %>% filter(Year_Incorp == 2018 & Year_Dissol == 2018 & status == "dissolved") %>% select(word, name, status, incorporation_date,dissolution_date, Year_Incorp, Year_Dissol)
+```
+
+```{r}
+dissolved18 <- total %>% filter(status %in% c("dissolved","liquidation")  & Year_Dissol == 2018 & !grepl("COIN SERVICES|COIN UK PRIVATE",name)) %>% mutate(duration_life = ( difftime(dissolution_date,incorporation_date, units = c("days"))))
+```
+
+The median period that companies dissolved or liquidated in 2018 were alive is around a year and a half (524 days), but five of them were alived during less than half a year (< 182 days) and 14 closed after five years of operations. 
+
+```{r}
+median(dissolved18$duration_life_year)
+524/365
+dissolved18 %>% arrange(duration_life) %>% select(name, number, incorporation_date, dissolution_date, duration_life) %>% filter(duration_life < 182)
+```
+
+```{r}
+dissolved18 %>% arrange(desc(duration_life)) %>% select(name, number, incorporation_date, dissolution_date, duration_life) %>% filter(duration_life>1825)
+```
+```{r}
+365*5
+```
+
+
+Half of the companies dissolved during 2018 were registered in London and half of them (151) in other places except London.
+
+The number of companies dissolved has been increasing since March, being the second part of the year when 60% of the companies dissolved were dissolved. 
+
+```{r}
+dissolved18$month <- month(dissolved18$dissolution_date)
+```
+
+
+```{r}
+qplot(dissolved18$month, geom="histogram",binwidth = 0.5, main="Number of companies dissolved each month",xlab="Months",ylab="Number of companies") 
+```
+
+
+
+```{r}
+test <- dissolved18 %>% group_by(month) %>% count() 
+test$n/sum(test$n)*100
+10.526316+11.403509+11.403509+10.233918+15.497076
+```
+
+```{r}
+dissolved18 %>% filter(!grepl("London|LONDON", address))
+```
+
+
+```{r}
+dissolved18 %>% group_by(Year_Incorp) %>% count()
+```
+
+```{r}
+(105+206)/340
+206/340
+```
+91% of the companies dissolved in 2018 were created between 2016 and 2017. 
+60% of the companies dissolved or in liquidation in 2018 were incorporated to the Companies House register in 2017.
+
+```{r}
+write.csv(dissolved18, "dissolved18_final.csv")
+write.csv(dissolved18 %>% filter(!grepl("London|LONDON", address)),"outsidelondon.csv")
+```
+
+
+## Ceased companies still in active
+
+```{r}
+total %>% filter(status == "active" & previous_name !="Empty" & previous_ceased_year == 2018 & !grepl("CRYPTOGRAPHY|UK YIRENJIAREN BIZ CENTRE|BRAND AND TECHNOLOGY|LEISURE|ABK CRYPTO HOLDINGS|LABS|GLOBAL TV|JUST ABOUT|TOWARDS BLOCKCHAIN|COIN EQUITY|MOVIE", name)) %>% mutate(duration_life = difftime(ceased_on, effective_from, units = c("days"))) %>% arrange(duration_life) %>% select(name,previous_name,ceased_on)
+```
+
+54 companies were ceased on 2018 and changed their names. 26 of those companies were also registered in Companies House during 2018
+
+.
+```{r}
+write.csv(total %>% filter(status == "active" & previous_name !="Empty" & previous_ceased_year == 2018 & !grepl("CRYPTOGRAPHY|UK YIRENJIAREN BIZ CENTRE|BRAND AND TECHNOLOGY|LEISURE|ABK CRYPTO HOLDINGS|LABS|GLOBAL TV|JUST ABOUT|TOWARDS BLOCKCHAIN|COIN EQUITY|MOVIE", name)&Year_Incorp==2018) %>% mutate(duration_life = difftime(ceased_on, effective_from, units = c("days"))) %>% arrange(duration_life), "ceased.csv")
+```
+
+## Creating companies
+
+```{r}
+total %>% filter(Year_Incorp=="2017" & status == "dissolved") %>% group_by(Year_Dissol) %>% count()
+```
+
+Around 800 new companies related to bitcoins were registered in both years, 2017 and 2018. Almost all of those created in 2018 are still active, but one in four of those created in 2017 has been dissolved the vast majority during 2018. 
+
+```{r}
+212/808
+```
+
+
+```{r}
+unique(total$status)
+```
+
+
+## Decemeber 2017
+
+```{r}
+total %>% filter(grepl("2017-12",dissolution_date) & status == "dissolved") %>% select(name, status,incorporation_date,dissolution_date)
+```
+
+```{r}
+write.csv(total %>% filter(grepl("2017-12",dissolution_date) & status == "dissolved"),"december17.csv")
+```
+
