@@ -6,6 +6,6 @@ I wrote about my process in a Medium post and I am sharing my notebooks with the
 
 ## Notebooks
 <ul>
-  <li>The notebook <a href="https://github.com/Carmen-Aguilar/API_Python/blob/master/companies_house.ipynb">companies_house</a> shows the process to gather information from Companies House API.</li>
-<li>The notebook <a href="https://github.com/Carmen-Aguilar/API_Python/blob/master/OpenCorporates.ipynb">OpenCorporates</a> shows the process to extract the data from OpenCorporates API API.</li>
+  <li>The notebook <a href="https://github.com/Carmen-Aguilar/API_Python/blob/master/companies_house-notebook.ipynb">companies_house</a> shows the process to gather information from Companies House API.</li>
+<li>The notebook <a href="https://github.com/Carmen-Aguilar/API_Python/blob/master/OpenCorporates-notebook.ipynb">OpenCorporates</a> shows the process to extract the data from OpenCorporates API API.</li>
   <li>The R Notebook called <a href="https://github.com/Carmen-Aguilar/API_Python/blob/master/bitcoin.Rmd">bicoin</a> shows the cleaning process and the statistical analysis.</li></ul>
